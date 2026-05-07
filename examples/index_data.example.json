@@ -1,0 +1,48 @@
+﻿{
+  "index_version": "1.0",
+  "created_at": "2026-05-08T00:00:00Z",
+  "description": "Example index data - FICTIONAL PATHS ONLY",
+  "folders": [
+    {
+      "path": "C:/Users/Example/Documents/Research",
+      "type": "academic_papers",
+      "rules": {
+        "extensions": [".pdf", ".bib", ".tex"],
+        "exclude": ["drafts/", "*.tmp"]
+      },
+      "metadata": {
+        "category": "research",
+        "tags": ["papers", "citations"]
+      }
+    },
+    {
+      "path": "D:/Example/Projects/Code",
+      "type": "source_code",
+      "rules": {
+        "extensions": [".py", ".js", ".ts", ".rs"],
+        "patterns": ["src/**/*", "lib/**/*"]
+      },
+      "metadata": {
+        "category": "development",
+        "tags": ["code", "projects"]
+      }
+    },
+    {
+      "path": "E:/Example/Media/Photos",
+      "type": "personal_photos",
+      "rules": {
+        "extensions": [".jpg", ".png", ".heic"],
+        "date_range": {"after": "2020-01-01"}
+      },
+      "metadata": {
+        "category": "media",
+        "tags": ["photos", "personal"]
+      }
+    }
+  ],
+  "global_settings": {
+    "follow_symlinks": false,
+    "max_depth": 10,
+    "index_hidden": false
+  }
+}

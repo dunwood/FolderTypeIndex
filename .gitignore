@@ -1,0 +1,43 @@
+﻿# FolderTypeIndex .gitignore
+
+# Sensitive data
+.env
+*.env
+
+# User data files (DO NOT COMMIT)
+index_data.json
+folder_type_index_import.json
+
+# Python virtual environments
+.venv/
+venv/
+env/
+*.pyc
+__pycache__/
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
