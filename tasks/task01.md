@@ -222,17 +222,20 @@ git status
 
 ---
 
-## 后续任务建议
 
-### Task 02 (建议)
-- [ ] 添加 GitHub Actions CI 配置 (lint + test)
-- [ ] 创建 GitHub Issue 模板
-- [ ] 添加 CODE_OF_CONDUCT.md
+## 后续任务记录
 
-### Task 03 (建议)  
-- [ ] 编写 v4 源码的 README 迁移指南
-- [ ] 添加 PyPI 打包配置 (setup.py / pyproject.toml)
-- [ ] 准备 v4.0.1 补丁发布流程
+### Task 02
+- [x] 新增 Codex VS 扫描脚本
+- [x] 扫描 D:\AI Project
+- [x] 生成 FolderTypeIndex 可导入的 folder_type_index_import.json
+- [x] GUI 导入测试通过
+
+### Task 03
+- [x] 优化扫描过滤规则
+- [x] 默认排除源码文件、锁文件、普通开发配置和无资料价值文件
+- [x] 修复 max-files 达到上限后反复打印的问题
+- [x] GUI 导入测试通过
 
 ### 长期规划
 - [ ] 设计插件系统架构文档
