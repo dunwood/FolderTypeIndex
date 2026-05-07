@@ -692,13 +692,25 @@ class FolderTypeIndexApp:
     def generate_import_json_from_scan(self):
         project_root = self.find_project_root()
         script = project_root / "tools" / "generate_folder_type_index_import.py"
-        scan_root = project_root.parent
+        default_scan_root = project_root.parent
+        if not default_scan_root.exists():
+            default_scan_root = project_root
         out_path = project_root / "folder_type_index_import.json"
         max_files = "5000"
 
         if not script.exists():
             messagebox.showerror("未找到扫描脚本", f"未找到扫描脚本：\n{script}")
             return
+
+        selected_dir = filedialog.askdirectory(
+            title="选择要扫描的文件夹",
+            initialdir=str(default_scan_root),
+            mustexist=True,
+        )
+        if not selected_dir:
+            return
+
+        scan_root = Path(selected_dir).resolve()
 
         ok = messagebox.askyesno(
             "扫描生成导入 JSON",

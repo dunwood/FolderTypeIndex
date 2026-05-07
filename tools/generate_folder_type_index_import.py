@@ -46,6 +46,33 @@ def get_proj(root,fp):
     p=[x for x in r.parts if x]
     return p[0] if p else 'unknown'
 
+def is_single_project_root(root):
+    """判断扫描根目录是否更像单个项目，而不是项目集合目录。"""
+    rp = Path(root)
+    markers = {'readme.md', 'package.json', 'pyproject.toml', '.git', 'docs', 'src', 'app', 'tasks'}
+    try:
+        names = {child.name.lower() for child in rp.iterdir()}
+    except OSError:
+        return False
+    return any(marker in names for marker in markers)
+
+def project_and_subdirs(root, fp, single_project_mode):
+    """返回导入树中的项目名和中间目录。
+
+    多项目根目录：D:\\AI Project -> 项目名取第一层目录。
+    单项目根目录：D:\\AI Project\\BettaFish -> 项目名取 root 文件夹名。
+    """
+    rp = Path(root).resolve()
+    rel = Path(fp).resolve().relative_to(rp)
+    parts = [x for x in rel.parts if x]
+    if single_project_mode:
+        project_name = rp.name or 'unknown'
+        subdirs = parts[:-1]
+    else:
+        project_name = parts[0] if parts else (rp.name or 'unknown')
+        subdirs = parts[1:-1]
+    return project_name, [p for p in subdirs if p]
+
 def is_src_ext(fn):
     return any(fn.lower().endswith(e) for e in SRC_EXTS)
 
@@ -114,6 +141,8 @@ def scan(root,maxf,dry):
     samples={}
     stop_scan=False
     print('[扫描]',rp,'max=',maxf,'dry=',dry)
+    single_project_mode = is_single_project_root(rp)
+    print('[扫描模式]', '单项目目录' if single_project_mode else '多项目目录')
 
     for dp,dns,fns in os.walk(rp):
         dns[:]=[d for d in dns if not skip_dir(d)]
@@ -155,9 +184,7 @@ def scan(root,maxf,dry):
                 elif is_deploy_config(fn): cat='部署资料'
                 else: cat=DEFAULT_CAT
 
-            proj=get_proj(root,fp)
-            rel=Path(fp).relative_to(rp)
-            subs=[p for p in rel.parts[1:-1] if p]  # 排除项目名和文件名
+            proj, subs = project_and_subdirs(rp, fp, single_project_mode)
             tp=[cat,proj]+subs  # tree_path 不包含文件名
             note='自动扫描:'+fn[:30]
             items.append({'tree_path':tp,'name':fn,'type':'文件链接','path':str(Path(fp).resolve()),'url':'','note':note})
