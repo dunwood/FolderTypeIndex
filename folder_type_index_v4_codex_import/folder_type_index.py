@@ -15,6 +15,7 @@ FolderTypeIndex - 按类型重组的项目文件超链接索引树
 
 import json
 import os
+import subprocess
 import sys
 import ctypes
 import uuid
@@ -157,9 +158,10 @@ class FolderTypeIndexApp:
         search.insert(0, "")
         search.bind("<KeyRelease>", lambda _e: self.refresh_tree())
         ttk.Button(top, text="新建一级分类", command=self.add_root_node).grid(row=0, column=2, padx=3)
-        ttk.Button(top, text="导入 Codex JSON", command=self.import_codex_json).grid(row=0, column=3, padx=3)
-        ttk.Button(top, text="生成导入模板", command=self.export_import_template).grid(row=0, column=4, padx=3)
-        ttk.Button(top, text="导出 Markdown", command=self.export_markdown).grid(row=0, column=5, padx=3)
+        ttk.Button(top, text="扫描生成导入 JSON", command=self.generate_import_json_from_scan).grid(row=0, column=3, padx=3)
+        ttk.Button(top, text="导入 Codex JSON", command=self.import_codex_json).grid(row=0, column=4, padx=3)
+        ttk.Button(top, text="生成导入模板", command=self.export_import_template).grid(row=0, column=5, padx=3)
+        ttk.Button(top, text="导出 Markdown", command=self.export_markdown).grid(row=0, column=6, padx=3)
 
         left = ttk.Frame(self.master, padding=(10, 0, 5, 6))
         left.grid(row=1, column=0, sticky=N + S + E + W)
@@ -669,6 +671,103 @@ class FolderTypeIndexApp:
         self.save_data()
         self.refresh_tree()
         return added, updated, skipped
+
+    def find_project_root(self):
+        """定位 FolderTypeIndex 项目根目录。"""
+        candidates = [Path(__file__).resolve().parent, Path(__file__).resolve().parent.parent, Path.cwd()]
+        for base in candidates:
+            if (base / "tools" / "generate_folder_type_index_import.py").exists():
+                return base
+        return Path(__file__).resolve().parent.parent
+
+    def python_for_subprocess(self):
+        """优先用 python.exe，避免 pythonw.exe 场景下子进程输出不稳定。"""
+        exe = Path(sys.executable)
+        if exe.name.lower() == "pythonw.exe":
+            python_exe = exe.with_name("python.exe")
+            if python_exe.exists():
+                return str(python_exe)
+        return sys.executable
+
+    def generate_import_json_from_scan(self):
+        project_root = self.find_project_root()
+        script = project_root / "tools" / "generate_folder_type_index_import.py"
+        scan_root = project_root.parent
+        out_path = project_root / "folder_type_index_import.json"
+        max_files = "5000"
+
+        if not script.exists():
+            messagebox.showerror("未找到扫描脚本", f"未找到扫描脚本：\n{script}")
+            return
+
+        ok = messagebox.askyesno(
+            "扫描生成导入 JSON",
+            "将扫描以下目录：\n"
+            f"{scan_root}\n\n"
+            "并生成导入文件：\n"
+            f"{out_path}\n\n"
+            "此操作只读取文件名、路径、扩展名等元信息，\n"
+            "不会复制、移动、删除真实文件，\n"
+            "也不会自动修改 index_data.json。\n\n"
+            "是否继续？",
+        )
+        if not ok:
+            return
+
+        cmd = [
+            self.python_for_subprocess(),
+            str(script),
+            "--root", str(scan_root),
+            "--out", str(out_path),
+            "--max-files", max_files,
+        ]
+
+        # Force UTF-8 output from the child Python process.
+        # Without this, Windows may emit GBK/ACP bytes while the GUI decodes as UTF-8,
+        # causing Chinese statistics text to appear as mojibake.
+        env = os.environ.copy()
+        env["PYTHONIOENCODING"] = "utf-8"
+        env["PYTHONUTF8"] = "1"
+
+        try:
+            result = subprocess.run(
+                cmd,
+                cwd=str(project_root),
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                env=env,
+            )
+        except Exception as exc:
+            messagebox.showerror("扫描失败", f"无法执行扫描脚本：\n{exc}")
+            return
+
+        output = (result.stdout or "").strip()
+        error_output = (result.stderr or "").strip()
+
+        if result.returncode != 0:
+            messagebox.showerror(
+                "扫描失败",
+                "扫描脚本执行失败。\n\n"
+                f"命令：{' '.join(cmd)}\n\n"
+                f"错误信息：\n{error_output or output or '无输出'}",
+            )
+            return
+
+        if not out_path.exists():
+            messagebox.showerror("生成失败", f"扫描脚本已结束，但未找到输出文件：\n{out_path}")
+            return
+
+        lines = [line for line in output.splitlines() if line.strip()]
+        summary = "\n".join(lines[-18:]) if lines else "扫描完成。"
+        messagebox.showinfo(
+            "扫描完成",
+            "已生成导入 JSON。\n\n"
+            f"输出文件：\n{out_path}\n\n"
+            "下一步：请点击“导入 Codex JSON”导入。\n\n"
+            f"统计摘要：\n{summary}",
+        )
 
     def import_codex_json(self):
         in_path = filedialog.askopenfilename(
