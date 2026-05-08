@@ -1,0 +1,274 @@
+model_provider = "dashscope"
+model = "qwen3.6-plus"
+
+[model_providers.dashscope]
+name = "Alibaba Cloud Model Studio / DashScope"
+base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+env_key = "DASHSCOPE_API_KEY"
+wire_api = "responses"
+
+[sandbox_workspace_write]
+network_access = true
+
+
+
+
+你现在这个 `config.toml` 放在这里：
+
+```text id="7rc8zx"
+C:\Users\Admin\.codex\config.toml
+```
+
+对应 PowerShell 路径是：
+
+```powershell id="gbcxqa"
+$env:USERPROFILE\.codex\config.toml
+```
+
+因为你的 Windows 用户目录是：
+
+```text id="tdfxhk"
+C:\Users\Admin
+```
+
+所以完整路径就是：
+
+```text id="1k7bpl"
+C:\Users\Admin\.codex\config.toml
+```
+
+## 为什么放这里？
+
+这是 Codex 的用户级配置目录。
+也就是说，不是某个项目专用，而是你这个 Windows 用户下的 Codex 全局配置。
+
+所以你在这些项目里启动 Codex：
+
+```text id="i5kyb9"
+D:\AI Project\RoleForge
+D:\AI Project\folderindex
+D:\AI Project\central-docs
+```
+
+都会默认读取这个配置。
+
+## 你可以这样打开
+
+```powershell id="l9e18n"
+notepad C:\Users\Admin\.codex\config.toml
+```
+
+或者：
+
+```powershell id="7naboe"
+notepad $env:USERPROFILE\.codex\config.toml
+```
+
+## 这个文件里两类内容
+
+第一类是全局模型配置：
+
+```toml id="dob3j7"
+model_provider = "dashscope"
+model = "qwen3.6-plus"
+```
+
+第二类是项目授权记录：
+
+```toml id="cal0zd"
+[projects.'D:\AI Project\RoleForge']
+trust_level = "trusted"
+```
+===============
+可以，两个问题分别说。
+
+## 1. 工作模式只能在 PowerShell 吗？可以到 VS Code 里用吗？
+
+**可以到 VS Code 里用。**
+
+你现在用的是 **Codex CLI**，所以界面在 PowerShell。
+但 Codex 也有 **VS Code / IDE 扩展**。官方说明是：Codex IDE extension 使用 Codex CLI，并且默认模型、sandbox、approval 等配置都读取同一个：
+
+```text
+C:\Users\Admin\.codex\config.toml
+```
+
+也就是说，你现在配好的：
+
+```toml
+model_provider = "dashscope"
+model = "qwen3.6-plus"
+```
+
+理论上 VS Code 里的 Codex 扩展也会读到。Codex 官方文档也说 CLI 和 IDE extension 共用同一套配置层。([OpenAI开发者][1])
+
+### 在 VS Code 里用的方式
+
+打开 VS Code，然后打开项目文件夹：
+
+```text
+D:\AI Project\folderindex
+```
+
+然后找左侧或侧边栏里的 **Codex** 面板。
+
+如果 Codex 面板里显示模型是：
+
+```text
+qwen3.6-plus
+```
+
+就说明 VS Code 也接上百炼了。
+
+如果没显示，你可以在 VS Code 的 Codex 面板右上角点齿轮，然后找：
+
+```text
+Codex Settings > Open config.toml
+```
+
+官方文档也写了，IDE 扩展里可以通过齿轮打开同一个 `config.toml`。([OpenAI开发者][1])
+
+## 2. 要切回 ChatGPT / OpenAI 大模型怎么做？
+
+改这个文件：
+
+```powershell
+notepad $env:USERPROFILE\.codex\config.toml
+```
+
+把开头这段：
+
+```toml
+model_provider = "dashscope"
+model = "qwen3.6-plus"
+
+[model_providers.dashscope]
+name = "Alibaba Cloud Model Studio / DashScope"
+base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+env_key = "DASHSCOPE_API_KEY"
+wire_api = "responses"
+```
+
+改回：
+
+```toml
+model = "gpt-5.5"
+```
+
+保留后面的：
+
+```toml
+[windows]
+sandbox = "elevated"
+
+[plugins."github@openai-curated"]
+enabled = true
+```
+
+最终最简版可以是：
+
+```toml
+model = "gpt-5.5"
+
+[windows]
+sandbox = "elevated"
+
+[plugins."github@openai-curated"]
+enabled = true
+```
+
+官方文档说 Codex CLI 和 IDE 扩展通过 `model = "gpt-5.5"` 指定默认本地模型；如果账号暂时没有 `gpt-5.5`，可以用 `gpt-5.4`。([OpenAI开发者][2])
+
+## 最简单的切换方法
+
+你可以准备两个配置文件：
+
+```text
+config.qwen.toml
+config.openai.toml
+```
+
+### 切到百炼 Qwen
+
+```powershell
+Copy-Item $env:USERPROFILE\.codex\config.qwen.toml $env:USERPROFILE\.codex\config.toml -Force
+```
+
+### 切回 OpenAI / ChatGPT
+
+```powershell
+Copy-Item $env:USERPROFILE\.codex\config.openai.toml $env:USERPROFILE\.codex\config.toml -Force
+```
+
+以后切换就是复制一下配置文件，然后重新打开 Codex。
+
+## 当前建议
+
+你现在先保持：
+
+```toml
+model_provider = "dashscope"
+model = "qwen3.6-plus"
+```
+
+等你确认 VS Code 里也能正常用，再做两个配置文件，方便一键切换。
+
+[1]: https://developers.openai.com/codex/config-basic?utm_source=chatgpt.com "Config basics – Codex"
+[2]: https://developers.openai.com/codex/models?utm_source=chatgpt.com "Codex Models"
+
+=========
+
+对，断线 / 退出 PowerShell 后，重新进入 Codex 的标准流程就是：
+
+```powershell
+cd "你的项目目录"
+codex
+```
+
+比如你这个项目：
+
+```powershell
+cd "D:\AI Project\folderindex"
+codex
+```
+
+进入后就可以直接输入自然语言任务。
+
+Codex CLI 官方说明就是在终端里运行的本地 coding agent，并且会读取你用户目录下的配置文件；CLI 默认从 `~/.codex/config.toml` 继承配置。([OpenAI开发者][1])
+
+你的 Windows 上对应就是：
+
+```text
+C:\Users\Admin\.codex\config.toml
+```
+
+所以只要这个文件还在，重新打开 PowerShell 后直接：
+
+```powershell
+cd "D:\AI Project\folderindex"
+codex
+```
+
+它仍然会使用：
+
+```text
+qwen3.6-plus
+```
+
+## 最简记法
+
+以后每次启动某个项目：
+
+```powershell
+cd "D:\AI Project\项目名"
+codex
+```
+
+不要在 Codex 里面输入 `cd` 和 `codex`。
+`cd` / `codex` 是在 **PowerShell** 里执行的。Codex 打开后，只输入任务。
+
+[1]: https://developers.openai.com/codex/cli?utm_source=chatgpt.com "Codex CLI"
+
+
+
+所以我们刚才没有删后面的项目记录，只是把前面的默认模型从 OpenAI 改成了百炼 Qwen。

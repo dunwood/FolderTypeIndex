@@ -111,7 +111,7 @@ class FolderTypeIndexApp:
     def __init__(self, master: Tk):
         self.master = master
         self.master.title(APP_TITLE)
-        self.master.geometry("1280x760")
+        self.master.geometry("1400x820")
         self.data_path = DATA_FILE
         self.data = self.load_data()
         self.selected_id = None
@@ -125,6 +125,10 @@ class FolderTypeIndexApp:
         self.status_var = StringVar(value=f"数据文件：{self.data_path}")
 
         self.build_ui()
+
+        # 底部状态栏
+        status = ttk.Label(self.master, textvariable=self.status_var, anchor=W, relief=SUNKEN)
+        status.grid(row=2, column=0, columnspan=2, sticky=E + W, padx=2, pady=2)
         self.refresh_tree()
 
     def load_data(self):
@@ -148,15 +152,35 @@ class FolderTypeIndexApp:
         self.master.columnconfigure(1, weight=2)
         self.master.rowconfigure(1, weight=1)
 
-        top = ttk.Frame(self.master, padding=(10, 8))
+        top = ttk.Frame(self.master, padding=(12, 10))
         top.grid(row=0, column=0, columnspan=2, sticky=E + W)
         top.columnconfigure(1, weight=1)
 
-        ttk.Label(top, text="FolderTypeIndex", style="Title.TLabel").grid(row=0, column=0, sticky=W, padx=(0, 16))
-        search = ttk.Entry(top, textvariable=self.search_var)
+        # 标题和搜索框（第一行）
+        title_frame = ttk.Frame(top)
+        title_frame.grid(row=0, column=0, columnspan=7, sticky=W + E, pady=(0, 8))
+        title_frame.columnconfigure(1, weight=1)
+        ttk.Label(title_frame, text="FolderTypeIndex", style="Title.TLabel").grid(row=0, column=0, sticky=W, padx=(0, 20))
+        search = ttk.Entry(title_frame, textvariable=self.search_var)
         search.grid(row=0, column=1, sticky=E + W, padx=(0, 10))
         search.insert(0, "")
         search.bind("<KeyRelease>", lambda _e: self.refresh_tree())
+
+        # 操作按钮组（第二行）- 分组摆放  
+        btn_frame = ttk.Frame(top)
+        btn_frame.grid(row=1, column=0, columnspan=7, sticky=W, pady=(0, 4))
+        ttk.Button(btn_frame, text="扫描生成导入", command=self.generate_import_json_from_scan).grid(row=0, column=0, padx=3)
+        ttk.Button(btn_frame, text="导入 Codex JSON", command=self.import_codex_json).grid(row=0, column=1, padx=3)
+        ttk.Button(btn_frame, text="生成模板", command=self.export_import_template).grid(row=0, column=2, padx=3)
+        ttk.Button(btn_frame, text="导出 Markdown", command=self.export_markdown).grid(row=0, column=3, padx=3)
+        ttk.Button(btn_frame, text="新建分类", command=self.add_root_node).grid(row=0, column=4, padx=(12, 3))
+
+        # 辅助按钮（第三行）
+        aux_frame = ttk.Frame(top)
+        aux_frame.grid(row=2, column=0, columnspan=7, sticky=W)
+        ttk.Button(aux_frame, text="打开数据文件", command=self.open_data_file).grid(row=0, column=0, padx=3)
+        ttk.Button(aux_frame, text="保存", command=self.save_data).grid(row=0, column=1, padx=3)
+        ttk.Button(aux_frame, text="刷新", command=self.refresh_tree).grid(row=0, column=2, padx=3)
         ttk.Button(top, text="新建一级分类", command=self.add_root_node).grid(row=0, column=2, padx=3)
         ttk.Button(top, text="扫描生成导入 JSON", command=self.generate_import_json_from_scan).grid(row=0, column=3, padx=3)
         ttk.Button(top, text="导入 Codex JSON", command=self.import_codex_json).grid(row=0, column=4, padx=3)
@@ -173,10 +197,10 @@ class FolderTypeIndexApp:
         self.tree.heading("type", text="类型")
         self.tree.heading("path", text="本地路径")
         self.tree.heading("url", text="网址")
-        self.tree.column("#0", width=360, stretch=True)
-        self.tree.column("type", width=90, anchor="center")
-        self.tree.column("path", width=320, stretch=True)
-        self.tree.column("url", width=240, stretch=True)
+        self.tree.column("#0", width=400, stretch=True)
+        self.tree.column("type", width=100, anchor="center")
+        self.tree.column("path", width=380, stretch=True)
+        self.tree.column("url", width=280, stretch=True)
         self.tree.grid(row=0, column=0, sticky=N + S + E + W)
         self.tree.bind("<<TreeviewSelect>>", self.on_select)
         self.tree.bind("<Double-1>", lambda _e: self.open_selected())

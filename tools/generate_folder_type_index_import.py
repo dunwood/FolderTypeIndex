@@ -56,13 +56,29 @@ def is_single_project_root(root):
         return False
     return any(marker in names for marker in markers)
 
-def project_and_subdirs(root, fp, single_project_mode):
-    """返回导入树中的项目名和中间目录。
 
-    多项目根目录：D:\\AI Project -> 项目名取第一层目录。
-    单项目根目录：D:\\AI Project\\BettaFish -> 项目名取 root 文件夹名。
-    """
-    rp = Path(root).resolve()
+def find_project_root(scan_dir):
+    """Find real project root by scanning upward from scan_dir."""
+    markers = {'.git', 'readme.md', 'license', 'package.json', 'pyproject.toml', 'docs', 'src', 'app', 'tasks'}
+    current = Path(scan_dir).resolve()
+    for _ in range(5):
+        try:
+            names = {child.name.lower() for child in current.iterdir()}
+            if len(names & markers) >= 2:
+                return current
+            if '.git' in names:
+                return current
+        except: pass
+        parent = current.parent
+        if parent == current: break
+        current = parent
+    return Path(scan_dir).resolve()
+
+def project_and_subdirs(scan_root, fp, single_project_mode):
+    """返回导入树中的项目名和中间目录。"""
+    # 先找到真正的项目根目录  
+    real_root = find_project_root(scan_root)
+    rp = real_root.resolve()
     rel = Path(fp).resolve().relative_to(rp)
     parts = [x for x in rel.parts if x]
     if single_project_mode:
@@ -72,6 +88,7 @@ def project_and_subdirs(root, fp, single_project_mode):
         project_name = parts[0] if parts else (rp.name or 'unknown')
         subdirs = parts[1:-1]
     return project_name, [p for p in subdirs if p]
+
 
 def is_src_ext(fn):
     return any(fn.lower().endswith(e) for e in SRC_EXTS)
@@ -141,7 +158,9 @@ def scan(root,maxf,dry):
     samples={}
     stop_scan=False
     print('[扫描]',rp,'max=',maxf,'dry=',dry)
-    single_project_mode = is_single_project_root(rp)
+    # 先找到真正的项目根，再判断模式  
+    real_root = find_project_root(rp)
+    single_project_mode = is_single_project_root(real_root)
     print('[扫描模式]', '单项目目录' if single_project_mode else '多项目目录')
 
     for dp,dns,fns in os.walk(rp):
